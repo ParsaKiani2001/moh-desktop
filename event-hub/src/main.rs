@@ -119,7 +119,7 @@ fn socket_path() -> String {
 
 fn main() -> std::io::Result<()> {
     let config = Config::load().unwrap();
-
+    
     let path = socket_path();
     let _ = std::fs::remove_file(&path);
     let listener = UnixListener::bind(&path)?;
