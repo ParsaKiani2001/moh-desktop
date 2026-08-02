@@ -1,32 +1,33 @@
 use std::process::exit;
 
 use crate::{
-    wm::client,
-    wm::event::{self, WmEvent},
-    x11::xserver::XServer,
-    ui::panel::Panel,
-    input::pointer::Pointer
+ input::pointer::Pointer, ui::panel::Panel, wm::{client, event::{self, WmEvent}}, x11::xserver::XServer
 };
 use crate::x11::cursor;
+use crate::config::Configs;
 use x11rb::connection::Connection;
 pub struct WindowManager {
     x: XServer,
-    panel: Panel,
+    panel: Option<Panel>,
     pointer: Pointer,
+    config:Configs
 }
 
 impl WindowManager {
 
-    pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn new(config:Configs) -> Result<Self, Box<dyn std::error::Error>> {
 
         let x = XServer::connect()?;
         let screen = &x.conn.setup().roots[x.screen_num];
-
-        let panel = Panel::new(&x.conn,screen.root,screen.width_in_pixels,)?;
+        let panel = if config.developer {
+           Some( Panel::new(&x.conn,screen.root,screen.width_in_pixels,)?)
+        }else{ 
+            None
+        };
         cursor::set_default_cursor(&x.conn,screen.root,)?;
         let pointer = Pointer::default();
         println!("Connected.");
-        Ok(Self {x,panel,pointer})
+        Ok(Self {x,panel,pointer,config})
         
     }
 
@@ -45,7 +46,7 @@ impl WindowManager {
                     self.pointer.move_to(x, y);
                     self.pointer.press();
                      println!("Mouse click: {}, {}", x, y);
-
+                    if self.config.developer{
     if x >= 10 && x <= 90 &&
        y >= 5 && y <= 25 {
 
@@ -60,7 +61,7 @@ impl WindowManager {
        match std::process::Command::new("xterm").env("DISPLAY", ":0").spawn() {
     Ok(_) => println!("xterm started"),
     Err(e) => println!("xterm error: {}", e),
-}
+}}
     }
                 }
 
@@ -78,7 +79,10 @@ impl WindowManager {
                 }
                 
                 WmEvent::Expose => {
-                    self.panel.draw(&self.x.conn)?;
+                    if let Some(panel) = &self.panel {
+
+        panel.draw(&self.x.conn)?;
+    }
                     
                     println!("Redraw panel");
                 }
