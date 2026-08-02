@@ -10,13 +10,21 @@ pub struct WindowManager {
     x: XServer,
     panel: Option<Panel>,
     pointer: Pointer,
-    config:Configs
+    config:Configs,
+    hub: Option<Hub>, 
 }
-
+use crate::hub::Hub;
 impl WindowManager {
 
     pub fn new(config:Configs) -> Result<Self, Box<dyn std::error::Error>> {
-
+        let mut hub = Hub::connect();
+        if let Some(h) = hub.as_mut() {
+            h.publish("wm.started", serde_json::json!({ "msg": "wm is up" }));
+            h.register(&["wm.ping"]);
+            h.listen(|topic, payload| {
+            println!("[hub] received topic={topic} payload={payload}");
+        });
+}
         let x = XServer::connect()?;
         let screen = &x.conn.setup().roots[x.screen_num];
         let panel = if config.developer {
@@ -27,7 +35,7 @@ impl WindowManager {
         cursor::set_default_cursor(&x.conn,screen.root,)?;
         let pointer = Pointer::default();
         println!("Connected.");
-        Ok(Self {x,panel,pointer,config})
+        Ok(Self {x,panel,pointer,config,hub })
         
     }
 
@@ -70,6 +78,9 @@ impl WindowManager {
                     self.pointer.release();
                 }
                 WmEvent::Map(window) => {
+                     if let Some(h) = self.hub.as_mut() {
+                        h.publish("wm.window_mapped", serde_json::json!({ "id": window }));
+                    }
                       println!("Map request: {}", window);
 
     client::map_window(

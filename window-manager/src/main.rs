@@ -3,6 +3,7 @@ mod ui;
 mod x11;
 mod  input;
 mod config;
+mod hub;
 
 use crate::{config::Configs, wm::window::WindowManager};
 
