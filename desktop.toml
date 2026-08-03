@@ -1,0 +1,10 @@
+developer = true
+
+[modules]
+
+wallpaper = "../target/debug/wallpaper"
+
+window_manager = "../target/debug/window-manager"
+
+panel = "../target/debug/cursor"
+cursor = "../target/debug/cursor"

@@ -116,7 +116,6 @@ fn socket_path() -> String {
     format!("{runtime}/moh-event-hub.sock")
 }
 
-
 fn main() -> std::io::Result<()> {
     let config = Config::load().unwrap();
     
@@ -166,6 +165,10 @@ fn main() -> std::io::Result<()> {
                             if s.topics.contains(&topic) {
                                 let _ = writeln!(s.writer, "{out}");
                             }
+                        }
+                         if topic == "system.exit" {
+                            std::thread::sleep(std::time::Duration::from_millis(300));
+                            std::process::exit(0);
                         }
                     }
                     Err(e) => eprintln!("bad message: {e} -- {line}"),

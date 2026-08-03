@@ -1,15 +1,14 @@
 use std::process::exit;
 
 use crate::{
- input::pointer::Pointer, ui::panel::Panel, wm::{client, event::{self, WmEvent}}, x11::xserver::XServer
+ input::pointer::{self, Pointer}, ui::panel::Panel, wm::{client, event::{self, WmEvent}}, x11::xserver::XServer
 };
-use crate::x11::cursor;
 use crate::config::Configs;
 use x11rb::connection::Connection;
 pub struct WindowManager {
     x: XServer,
     panel: Option<Panel>,
-    pointer: Pointer,
+    pointer: Option<Pointer>,
     config:Configs,
     hub: Option<Hub>, 
 }
@@ -32,8 +31,7 @@ impl WindowManager {
         }else{ 
             None
         };
-        cursor::set_default_cursor(&x.conn,screen.root,)?;
-        let pointer = Pointer::default();
+        let pointer = Some(Pointer::default());
         println!("Connected.");
         Ok(Self {x,panel,pointer,config,hub })
         
@@ -44,20 +42,26 @@ impl WindowManager {
         loop {
 
             let event = self.x.conn.wait_for_event()?;
-
            match event::parse(event) {
                 WmEvent::Motion { x, y } => {
-                    self.pointer.move_to(x, y);
+                    if let Some(pointer) = &mut self.pointer {
+                        pointer.move_to(x, y);
+                    }
                 }
 
                 WmEvent::ButtonPress { x, y } => {
-                    self.pointer.move_to(x, y);
-                    self.pointer.press();
+                     if let Some(pointer) = &mut self.pointer {
+                       pointer.move_to(x, y);
+                        pointer.press();
+                    }
+                    
                      println!("Mouse click: {}, {}", x, y);
                     if self.config.developer{
     if x >= 10 && x <= 90 &&
        y >= 5 && y <= 25 {
-
+        if let Some(h) = self.hub.as_mut(){
+            h.publish("system.exit", serde_json::json!({}));
+        }
         println!("Exit button clicked");
         exit(0);
        }
@@ -74,8 +78,10 @@ impl WindowManager {
                 }
 
                 WmEvent::ButtonRelease { x, y } => {
-                    self.pointer.move_to(x, y);
-                    self.pointer.release();
+                    if let Some(pointer) = &mut self.pointer {
+                        pointer.move_to(x, y);
+                        pointer.release()
+                    }
                 }
                 WmEvent::Map(window) => {
                      if let Some(h) = self.hub.as_mut() {

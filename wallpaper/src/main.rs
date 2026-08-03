@@ -7,18 +7,13 @@ use x11rb::{
     rust_connection::RustConnection,
     COPY_FROM_PARENT,
 };
-use std::os::unix::net::UnixStream;
-fn socket_path() -> String {
-    let runtime = std::env::var("XDG_RUNTIME_DIR").unwrap_or_else(|_| "/tmp".to_string());
-    format!("{runtime}/moh-event-hub.sock")
-}
+mod hub;
+
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // اتصال به event-hub (فعلاً فقط connect، بدون register/publish)
-    match UnixStream::connect(socket_path()) {
-        Ok(_) => eprintln!("[wallpaper] connected to event-hub"),
-        Err(e) => eprintln!("[wallpaper] not connected ({e}), running standalone"),
-    }
+    let  stream = hub::HubController::new().unwrap();
+    stream.checker()?;
 
     let (conn, screen_num) = RustConnection::connect(None)?;
     let screen = &conn.setup().roots[screen_num];
@@ -54,12 +49,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     AtomEnum::ATOM,
     &[net_wm_window_type_desktop],
 )?;
-
     conn.map_window(win)?;
     conn.flush()?;
-
     eprintln!("[wallpaper] window mapped");
-
+    
     loop {
         conn.wait_for_event()?;
     }
