@@ -10,11 +10,9 @@ impl Pointer {
         self.x = x;
         self.y = y;
     }
-
     pub fn press(&mut self) {
         self.left_pressed = true;
     }
-
     pub fn release(&mut self) {
         self.left_pressed = false;
     }

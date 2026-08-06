@@ -1,0 +1,3 @@
+cd event-hub
+startx
+

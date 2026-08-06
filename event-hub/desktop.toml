@@ -6,5 +6,5 @@ wallpaper = "../target/debug/wallpaper"
 
 window_manager = "../target/debug/window-manager"
 
-panel = "../target/debug/cursor"
+panel = "../target/debug/dev-panel"
 cursor = "../target/debug/cursor"

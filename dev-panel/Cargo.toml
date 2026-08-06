@@ -1,9 +1,9 @@
 [package]
-name = "window-manager"
+name = "dev-panel"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
 x11rb = "0.13"
 serde_json = "1"
-common = { path = "../common"}
+common = { path = "../common" }

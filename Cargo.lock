@@ -9,10 +9,28 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b588b76d00fde79687d7646a9b5bdf3cc0f655e0bbd080335a95d7e96f3587da"
 
 [[package]]
-name = "cursor"
+name = "common"
 version = "0.1.0"
 dependencies = [
  "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "cursor"
+version = "0.1.0"
+dependencies = [
+ "common",
+ "serde",
+ "serde_json",
+ "x11rb",
+]
+
+[[package]]
+name = "dev-panel"
+version = "0.1.0"
+dependencies = [
+ "common",
  "serde_json",
  "x11rb",
 ]
@@ -37,6 +55,7 @@ dependencies = [
 name = "event-hub"
 version = "0.1.0"
 dependencies = [
+ "common",
  "serde",
  "serde_json",
  "toml",
@@ -238,6 +257,7 @@ checksum = "e6e4313cd5fcd3dad5cafa179702e2b244f760991f45397d14d4ebf38247da75"
 name = "wallpaper"
 version = "0.1.0"
 dependencies = [
+ "common",
  "serde",
  "serde_json",
  "x11rb",
@@ -247,6 +267,7 @@ dependencies = [
 name = "window-manager"
 version = "0.1.0"
 dependencies = [
+ "common",
  "serde_json",
  "x11rb",
 ]

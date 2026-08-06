@@ -1,48 +1,56 @@
 use std::process::exit;
 
-use crate::{
- input::pointer::{self, Pointer}, ui::panel::Panel, wm::{client, event::{self, WmEvent}}, x11::xserver::XServer
-};
 use crate::config::Configs;
+use crate::input::pointer::Pointer;
+use crate::wm::client;
+use crate::wm::event::{self, WmEvent};
+use crate::x11::xserver::XServer;
+use common::{HubClient, IncomingMessage};
 use x11rb::connection::Connection;
+
 pub struct WindowManager {
     x: XServer,
-    panel: Option<Panel>,
     pointer: Option<Pointer>,
-    config:Configs,
-    hub: Option<Hub>, 
+    config: Configs,
+    hub: Option<HubClient>,
+    terminal_opened: bool,  // ✅ flag برای جلوگیری از spawn مکرر
 }
-use crate::hub::Hub;
-impl WindowManager {
 
-    pub fn new(config:Configs) -> Result<Self, Box<dyn std::error::Error>> {
-        let mut hub = Hub::connect();
-        if let Some(h) = hub.as_mut() {
-            h.publish("wm.started", serde_json::json!({ "msg": "wm is up" }));
-            h.register(&["wm.ping"]);
-            h.listen(|topic, payload| {
-            println!("[hub] received topic={topic} payload={payload}");
+impl WindowManager {
+    pub fn new(
+        config: Configs,
+        mut hub: HubClient,
+    ) -> Result<Self, Box<dyn std::error::Error>> {
+        hub.on_message(|msg: IncomingMessage| {
+            println!("[WM] message: topic={}", msg.topic);
+            if msg.topic == "system.exit" {
+                println!("[WM] Exit requested");
+                exit(0);
+            }
         });
-}
+        hub.start_listener()?;
+
         let x = XServer::connect()?;
-        let screen = &x.conn.setup().roots[x.screen_num];
-        let panel = if config.developer {
-           Some( Panel::new(&x.conn,screen.root,screen.width_in_pixels,)?)
-        }else{ 
-            None
-        };
+        println!("[WM] Connected to X server ({}x{})", x.width, x.height);
         let pointer = Some(Pointer::default());
-        println!("Connected.");
-        Ok(Self {x,panel,pointer,config,hub })
-        
+
+        println!("[WM] Initialized");
+
+        Ok(Self {
+            x,
+            pointer,
+            config,
+            hub: Some(hub),
+            terminal_opened: false,  // ✅
+        })
     }
 
     pub fn run(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        println!("[WM] Entering event loop");
 
         loop {
-
             let event = self.x.conn.wait_for_event()?;
-           match event::parse(event) {
+            match event::parse(event) {
                 WmEvent::Motion { x, y } => {
                     if let Some(pointer) = &mut self.pointer {
                         pointer.move_to(x, y);
@@ -50,62 +58,31 @@ impl WindowManager {
                 }
 
                 WmEvent::ButtonPress { x, y } => {
-                     if let Some(pointer) = &mut self.pointer {
-                       pointer.move_to(x, y);
+                    if let Some(pointer) = &mut self.pointer {
+                        pointer.move_to(x, y);
                         pointer.press();
                     }
-                    
-                     println!("Mouse click: {}, {}", x, y);
-                    if self.config.developer{
-    if x >= 10 && x <= 90 &&
-       y >= 5 && y <= 25 {
-        if let Some(h) = self.hub.as_mut(){
-            h.publish("system.exit", serde_json::json!({}));
-        }
-        println!("Exit button clicked");
-        exit(0);
-       }
-    if x >= 100 && x <= 200 &&
-       y >= 5 && y <= 25 {
-
-        println!("Opening xterm");
-
-       match std::process::Command::new("xterm").env("DISPLAY", ":0").spawn() {
-    Ok(_) => println!("xterm started"),
-    Err(e) => println!("xterm error: {}", e),
-}}
-    }
                 }
 
                 WmEvent::ButtonRelease { x, y } => {
                     if let Some(pointer) = &mut self.pointer {
                         pointer.move_to(x, y);
-                        pointer.release()
+                        pointer.release();
                     }
                 }
+
                 WmEvent::Map(window) => {
-                     if let Some(h) = self.hub.as_mut() {
-                        h.publish("wm.window_mapped", serde_json::json!({ "id": window }));
+                    println!("[WM] Map request for window {}", window);
+                    if let Err(e) = client::map_window(&self.x.conn, window) {
+                        eprintln!("[WM] Failed to map window {}: {}", window, e);
                     }
-                      println!("Map request: {}", window);
-
-    client::map_window(
-        &self.x.conn,
-        window,
-    )?;
                 }
-                
+
                 WmEvent::Expose => {
-                    if let Some(panel) = &self.panel {
-
-        panel.draw(&self.x.conn)?;
-    }
-                    
-                    println!("Redraw panel");
                 }
 
-    WmEvent::Unknown => {}
-}
+                WmEvent::Unknown => {}
+            }
         }
     }
 }
