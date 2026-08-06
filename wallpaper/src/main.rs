@@ -1,10 +1,10 @@
 use x11rb::{
     connection::Connection,
     protocol::xproto::{
-        AtomEnum, ConnectionExt, CreateGCAux, CreateWindowAux, EventMask,
+        AtomEnum, ConnectionExt, CreateWindowAux, EventMask,
         PropMode, WindowClass,
     },
-    rust_connection::RustConnection,
+     rust_connection::RustConnection,
     wrapper::ConnectionExt as _,
     COPY_FROM_PARENT,
 };
@@ -90,7 +90,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     });
     hub.start_listener()?;
-    hub.publish("wm.created", serde_json::json!({}));
+    let _ = hub.publish("wm.created", serde_json::json!({}));
     // ✅ Event loop ساده - فقط event ها رو بخور
     loop {
         let _ev = conn.wait_for_event()?;

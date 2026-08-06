@@ -5,6 +5,17 @@ developer = true
 wallpaper = "../target/debug/wallpaper"
 
 window_manager = "../target/debug/window-manager"
-
+ui = "../target/debug/ui-service"
 panel = "../target/debug/dev-panel"
 cursor = "../target/debug/cursor"
+
+[theme]
+titlebar_height = 30
+titlebar_bg = "#2d5da1"
+titlebar_text = "#ffffff"
+titlebar_inactive_bg = "#555555"
+btn_close_color = "#ff5f57"
+btn_min_color = "#ffbd2e"
+btn_max_color = "#28c840"
+btn_size = 16
+btn_padding = 8

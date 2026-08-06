@@ -1,0 +1,14 @@
+:root {
+    --titlebar-bg: linear-gradient(180deg, #f0f0f0 0%, #e0e0e0 100%);
+    --titlebar-text: #333333;
+    --titlebar-inactive: #d0d0d0;
+}
+
+.titlebar {
+    background: linear-gradient(180deg, #f0f0f0 0%, #e0e0e0 100%);
+}
+
+.titlebar.inactive {
+    background: #d0d0d0;
+    color: #666;
+}

@@ -9,6 +9,8 @@ pub struct Modules {
     pub window_manager: String,
     pub panel: String,
     pub cursor: String,
+    pub ui: String,
+
 }
 
 #[derive(Debug, Deserialize)]
@@ -53,6 +55,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     start_module(&config.modules.window_manager)?;
     start_module(&config.modules.cursor)?;
     start_module(&config.modules.panel)?;
+    start_module(&config.modules.ui)?;
 
     
     // Start hub server

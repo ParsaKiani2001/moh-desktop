@@ -16,7 +16,7 @@ fn main()
     });
     hub.start_listener()?;
 
-    let cursor = CursorManager::new()?;
+    let _cursor = CursorManager::new()?;
     loop {
         std::thread::sleep(
             std::time::Duration::from_secs(1)
