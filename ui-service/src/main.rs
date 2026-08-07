@@ -1,5 +1,4 @@
 use std::sync::mpsc;
-
 use common::{socket_path, HubClient};
 use tao::{
     event::{Event, StartCause, WindowEvent},
@@ -28,7 +27,6 @@ enum Command {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("[ui-service] Starting...");
-
     let mut hub = HubClient::connect("ui-service", &socket_path())?;
     hub.register(vec![
         "system.exit",
@@ -37,9 +35,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "window.focused",
         "theme.change",
     ])?;
-
     let (tx, rx) = mpsc::channel::<Command>();
-
     hub.on_message(move |msg| {
         println!("[ui-service] got: topic={}", msg.topic);
         let cmd = match msg.topic.as_str() {
@@ -72,9 +68,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let _ = tx.send(cmd);
     });
     hub.start_listener()?;
-
     let event_loop = EventLoopBuilder::new().build();
-
     let window = WindowBuilder::new()
         .with_title("MOH Desktop - UI Service")
         .with_inner_size(tao::dpi::LogicalSize::new(800.0, 600.0))
@@ -86,12 +80,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
     let index_path = format!("file://{}/web/index.html", manifest_dir);
     println!("[ui-service] Loading: {}", index_path);
-
-    // ✅ API درست wry 0.35:
-    // new() → WebViewBuilder
-    // with_url() → Result<WebViewBuilder> (نیاز به ?)
-    // with_ipc_handler() → WebViewBuilder
-    // build() → Result<WebView> (نیاز به ?)
     let webview = WebViewBuilder::new()
     .with_url(&index_path)
     .with_ipc_handler(move |req| {
@@ -100,12 +88,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let _ = ipc_tx.send(msg);
     })
     .build(&window)?;
-
     println!("[ui-service] WebView created");
-
     event_loop.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Poll;
-
         match event {
             Event::NewEvents(StartCause::Init) => {
                 println!("[ui-service] Initialized");
@@ -141,7 +126,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         _ => {}
                     }
                 }
-
                 while let Ok(msg) = ipc_rx.try_recv() {
                     if let Ok(ui_msg) = serde_json::from_str::<UIMessage>(&msg) {
                         let topic = match ui_msg.action.as_str() {

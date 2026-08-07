@@ -15,19 +15,13 @@ enum Command {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("[panel] Starting...");
-
     let mut hub = HubClient::connect("panel", &socket_path())?;
     hub.register(vec!["system.exit", "panel.redraw", "wm.created"])?;
-
     let panel = Panel::new()?;
-
-    // ✅ draw اولیه بلافاصله
     println!("[panel] Performing initial draw");
     panel.draw()?;
     panel.raise()?;
-
     let (tx, rx) = mpsc::channel::<Command>();
-
     hub.on_message(move |msg| {
         println!("[panel] got: topic={}", msg.topic);
         match msg.topic.as_str() {
@@ -40,12 +34,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     });
     hub.start_listener()?;
-
     println!("[panel] Entering event loop");
-
-    // ✅ event loop درست
     loop {
-        // ۱. اول channel رو چک کن (بسیار سریع)
         while let Ok(cmd) = rx.try_recv() {
             println!("[panel] Processing command: {:?}", cmd);
             match cmd {
@@ -59,18 +49,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
         }
-
-        // ۲. بعد event X11 رو چک کن (non-blocking)
         match panel.poll_event()? {
             PanelEvent::Click { x, y } => {
                 println!("[panel] Click at ({}, {})", x, y);
-
                 if x >= 10 && x <= 90 && y >= 5 && y <= 25 {
                     println!("[panel] Exit clicked");
                     hub.publish("system.exit", serde_json::json!({}));
                     std::process::exit(0);
                 }
-
                 if x >= 100 && x <= 200 && y >= 5 && y <= 25 {
                     println!("[panel] Opening xterm");
                     match std::process::Command::new("xterm").env("DISPLAY", ":0").spawn() {
@@ -85,9 +71,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             PanelEvent::Unknown => {}
             PanelEvent::Timeout => {
-                // event نبود، یه کم صبر کن تا CPU درگیر نشه
                 thread::sleep(Duration::from_millis(10));
             }
-        }
     }
 }

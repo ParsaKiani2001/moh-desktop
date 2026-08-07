@@ -77,10 +77,6 @@ document.addEventListener('mousemove', (e) => {
     resizeStartY = e.screenY;
 });
 
-// ============================================
-// دریافت پیام از WM
-// ============================================
-
 window.addEventListener('ipc-message', (e) => {
     try {
         const msg = JSON.parse(e.data);
@@ -113,11 +109,6 @@ function handleWMMessage(msg) {
             break;
     }
 }
-
-// ============================================
-// Double-click برای maximize
-// ============================================
-
 titlebar.addEventListener('dblclick', (e) => {
     if (e.target.classList.contains('btn')) return;
     sendToWM('maximize');

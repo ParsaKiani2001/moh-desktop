@@ -11,7 +11,7 @@ cursor = "../target/debug/cursor"
 
 [theme]
 titlebar_height = 30
-titlebar_bg = "#2d5da1"
+titlebar_bg = "#2d5da169"
 titlebar_text = "#ffffff"
 titlebar_inactive_bg = "#555555"
 btn_close_color = "#ff5f57"
